@@ -1,8 +1,9 @@
 from dash import Dash, html, dcc, Input, Output
-from flask import Flask, request, jsonify
 import threading
 from datetime import datetime
 import plotly.graph_objects as go
+import paho.mqtt.client as mqtt
+import json
 
 # Thread-safe shared data
 latest_data = {
@@ -14,11 +15,42 @@ latest_data = {
 }
 data_lock = threading.Lock()
 
-# Flask server
-server = Flask(__name__)
+# MQTT Settings
+mqtt_broker = "test.mosquitto.org"  # Public broker
+mqtt_port = 1883
+mqtt_topic = "stm32/sensor_data"
+
+def on_connect(client, userdata, flags, rc):
+    print(f"Connected to MQTT Broker with code {rc}")
+    client.subscribe(mqtt_topic)
+
+def on_message(client, userdata, msg):
+    global latest_data
+    try:
+        payload = json.loads(msg.payload.decode())
+        with data_lock:
+            latest_data.update({
+                "temperature": float(payload['temperature']),
+                "humidity": float(payload['humidity']),
+                "light": int(payload['light']),
+                "co2": int(payload['co2']),
+                "timestamp": datetime.now()
+            })
+        print(f"Received and updated: {latest_data}")
+    except Exception as e:
+        print(f"Error parsing MQTT message: {e}")
+
+# Start MQTT client
+mqtt_client = mqtt.Client()
+mqtt_client.on_connect = on_connect
+mqtt_client.on_message = on_message
+mqtt_client.connect(mqtt_broker, mqtt_port, 60)
+mqtt_client.loop_start()
 
 # Dash app
-app = Dash(__name__, server=server, assets_folder='assets')
+server = None
+app = Dash(__name__, assets_folder='assets')
+server = app.server  # Needed for Render deployment
 
 # Danger thresholds
 THRESHOLDS = {
@@ -28,32 +60,6 @@ THRESHOLDS = {
     'co2': (300, 800)
 }
 
-# Flask API route
-@server.route('/api/sensors', methods=['POST'])
-def handle_sensor_data():
-    global latest_data
-    try:
-        sensor_data = request.json
-        required_keys = ['temperature', 'humidity', 'light', 'co2']
-
-        if not all(key in sensor_data for key in required_keys):
-            return jsonify({"error": "Incomplete data"}), 400
-
-        with data_lock:
-            latest_data.update({
-                "temperature": float(sensor_data['temperature']),
-                "humidity": float(sensor_data['humidity']),
-                "light": int(sensor_data['light']),
-                "co2": int(sensor_data['co2']),
-                "timestamp": datetime.now()
-            })
-
-        return jsonify({"status": "success"}), 200
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# Dash Layout
 def metric_style(bg_color):
     return {
         'backgroundColor': bg_color,
@@ -63,8 +69,9 @@ def metric_style(bg_color):
         'alignItems': 'center'
     }
 
+# Layout
 app.layout = html.Div(
-    style={'backgroundColor': '#e0f7e9', 'minHeight': '100vh', 'padding': '20px'},  # Light green
+    style={'backgroundColor': '#e0f7e9', 'minHeight': '100vh', 'padding': '20px'},
     children=[
         html.Div([
             html.Img(src='/assets/enit.png', style={'height': '70px', 'marginRight': '20px'}),
@@ -72,7 +79,6 @@ app.layout = html.Div(
         ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '30px'}),
 
         html.Div([
-            # Temperature
             html.Div([
                 html.Div("🌡️", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
@@ -81,7 +87,6 @@ app.layout = html.Div(
                 ]),
             ], style=metric_style('#d0f0c0')),
 
-            # Humidity
             html.Div([
                 html.Div("💧", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
@@ -90,7 +95,6 @@ app.layout = html.Div(
                 ]),
             ], style=metric_style('#d0f0c0')),
 
-            # Light
             html.Div([
                 html.Div("🔆", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
@@ -99,7 +103,6 @@ app.layout = html.Div(
                 ]),
             ], style=metric_style('#d0f0c0')),
 
-            # CO2
             html.Div([
                 html.Div("🌿", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
@@ -125,7 +128,7 @@ app.layout = html.Div(
     ]
 )
 
-# Dash Callbacks
+# Callbacks
 @app.callback(
     [Output('live-temperature', 'children'),
      Output('live-humidity', 'children'),
@@ -162,6 +165,6 @@ def update_metrics(n):
         alert_message
     )
 
-# Run server
+# Run
 if __name__ == '__main__':
     app.run_server(debug=True, host="0.0.0.0", port=8050)
