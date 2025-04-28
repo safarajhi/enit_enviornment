@@ -1,5 +1,5 @@
 dash
 flask
 gunicorn
+paho-mqtt
 plotly
-pyngrok
