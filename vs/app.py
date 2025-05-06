@@ -196,4 +196,4 @@ def update_metrics(n):
         f"{humidity:.1f}%",
         f"{luminosity} lux",
         f"{iaq}",
-        f"{tvoc} pp
+        f"{tvoc} ppb"
