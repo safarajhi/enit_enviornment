@@ -76,27 +76,27 @@ def metric_style(bg_color):
 app.layout = html.Div(
     style={'backgroundColor': '#e0f7e9', 'minHeight': '100vh', 'padding': '20px'},
     children=[
-        # Top Bar with centered title and logo on the right
         html.Div([
-            html.Div([
-                html.H1("Environmental Monitoring ENIT", style={
-                    'color': '#333', 'margin': '0', 'fontFamily': 'Segoe UI, sans-serif',
-                    'fontSize': '36px', 'textAlign': 'center'
-                })
-            ], style={'flex': '1', 'display': 'flex', 'justifyContent': 'center'}),
-
-            html.Div([
-                html.Img(src='/assets/manar.png', style={'height': '70px'})
-            ], style={'display': 'flex', 'alignItems': 'center'})
+            html.Img(src='/assets/enit.png', style={'height': '70px'}),
+            html.H1("Environmental Monitoring ENIT", style={
+                'color': '#333',
+                'margin': '0',
+                'fontSize': '36px',
+                'fontWeight': 'bold',
+                'textAlign': 'center',
+                'flexGrow': 1
+            }),
+            html.Img(src='/assets/manar.png', style={'height': '70px'})
         ], style={
-            'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'center',
+            'display': 'flex',
+            'justifyContent': 'space-between',
+            'alignItems': 'center',
             'marginBottom': '30px'
         }),
 
-        # Metrics Section
         html.Div([
             html.Div([
-                html.Div("🌡️", style={'fontSize': '40px', 'marginRight': '15px'}),
+                html.Div("\ud83c\udf21\ufe0f", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
                     html.Div("Temperature", style={'color': '#FF6B6B', 'fontSize': '18px'}),
                     html.Div(id='live-temperature', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
@@ -104,7 +104,7 @@ app.layout = html.Div(
             ], style=metric_style('#d0f0c0')),
 
             html.Div([
-                html.Div("💧", style={'fontSize': '40px', 'marginRight': '15px'}),
+                html.Div("\ud83d\udca7", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
                     html.Div("Humidity", style={'color': '#4ECDC4', 'fontSize': '18px'}),
                     html.Div(id='live-humidity', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
@@ -112,7 +112,7 @@ app.layout = html.Div(
             ], style=metric_style('#d0f0c0')),
 
             html.Div([
-                html.Div("🔆", style={'fontSize': '40px', 'marginRight': '15px'}),
+                html.Div("\ud83d\udd06", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
                     html.Div("Luminosity", style={'color': '#FFE66D', 'fontSize': '18px'}),
                     html.Div(id='live-luminosity', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
@@ -120,7 +120,7 @@ app.layout = html.Div(
             ], style=metric_style('#d0f0c0')),
 
             html.Div([
-                html.Div("🌫️", style={'fontSize': '40px', 'marginRight': '15px'}),
+                html.Div("\ud83c\udf2b\ufe0f", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
                     html.Div("IAQ", style={'color': '#FFA07A', 'fontSize': '18px'}),
                     html.Div(id='live-iaq', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
@@ -128,7 +128,7 @@ app.layout = html.Div(
             ], style=metric_style('#d0f0c0')),
 
             html.Div([
-                html.Div("🧪", style={'fontSize': '40px', 'marginRight': '15px'}),
+                html.Div("\ud83e\uddea", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
                     html.Div("TVOC", style={'color': '#F08080', 'fontSize': '18px'}),
                     html.Div(id='live-tvoc', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
@@ -136,18 +136,24 @@ app.layout = html.Div(
             ], style=metric_style('#d0f0c0')),
 
             html.Div([
-                html.Div("🫁", style={'fontSize': '40px', 'marginRight': '15px'}),
+                html.Div("\ud83e\udab1", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
                     html.Div("eCO2", style={'color': '#A0CED9', 'fontSize': '18px'}),
                     html.Div(id='live-eco2', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
                 ]),
             ], style=metric_style('#d0f0c0')),
         ], style={
-            'display': 'grid', 'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))', 'gap': '20px'
+            'display': 'grid',
+            'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))',
+            'gap': '20px'
         }),
 
         html.Div(id='alert-message', style={
-            'color': 'red', 'fontSize': '24px', 'fontWeight': 'bold', 'textAlign': 'center', 'marginTop': '20px'
+            'color': 'red',
+            'fontSize': '24px',
+            'fontWeight': 'bold',
+            'textAlign': 'center',
+            'marginTop': '20px'
         }),
 
         dcc.Interval(id='update-interval', interval=2000),
@@ -177,17 +183,17 @@ def update_metrics(n):
     alerts = []
 
     if not (THRESHOLDS['temperature'][0] <= temp <= THRESHOLDS['temperature'][1]):
-        alerts.append(f"⚠️ Temperature out of range: {temp:.1f}°C")
+        alerts.append(f"\u26a0\ufe0f Temperature out of range: {temp:.1f}°C")
     if not (THRESHOLDS['humidity'][0] <= humidity <= THRESHOLDS['humidity'][1]):
-        alerts.append(f"⚠️ Humidity out of range: {humidity:.1f}%")
+        alerts.append(f"\u26a0\ufe0f Humidity out of range: {humidity:.1f}%")
     if not (THRESHOLDS['luminosity'][0] <= luminosity <= THRESHOLDS['luminosity'][1]):
-        alerts.append(f"⚠️ Luminosity out of range: {luminosity} lux")
+        alerts.append(f"\u26a0\ufe0f Luminosity out of range: {luminosity} lux")
     if not (THRESHOLDS['iaq'][0] <= iaq <= THRESHOLDS['iaq'][1]):
-        alerts.append(f"⚠️ IAQ level out of range: {iaq}")
+        alerts.append(f"\u26a0\ufe0f IAQ level out of range: {iaq}")
     if not (THRESHOLDS['tvoc'][0] <= tvoc <= THRESHOLDS['tvoc'][1]):
-        alerts.append(f"⚠️ TVOC level out of range: {tvoc} ppb")
+        alerts.append(f"\u26a0\ufe0f TVOC level out of range: {tvoc} ppb")
     if not (THRESHOLDS['eco2'][0] <= eco2 <= THRESHOLDS['eco2'][1]):
-        alerts.append(f"⚠️ eCO2 level out of range: {eco2} ppm")
+        alerts.append(f"\u26a0\ufe0f eCO2 level out of range: {eco2} ppm")
 
     alert_message = ' | '.join(alerts) if alerts else ''
 
@@ -197,7 +203,8 @@ def update_metrics(n):
         f"{luminosity} lux",
         f"{iaq}",
         f"{tvoc} ppb",
-          alert_message
+        f"{eco2} ppm",
+        alert_message
     )
 
 # Run
