@@ -1,7 +1,6 @@
 from dash import Dash, html, dcc, Input, Output
 import threading
 from datetime import datetime
-import plotly.graph_objects as go
 import paho.mqtt.client as mqtt
 import json
 
@@ -54,7 +53,6 @@ server = None
 app = Dash(__name__, assets_folder='assets')
 server = app.server
 
-# Optional: Add thresholds if you want alerts
 THRESHOLDS = {
     'temperature': (15, 30),  
     'humidity': (30, 70),
@@ -77,9 +75,18 @@ app.layout = html.Div(
     style={'backgroundColor': '#e0f7e9', 'minHeight': '100vh', 'padding': '20px'},
     children=[
         html.Div([
-            html.Img(src='/assets/enit.png', style={'height': '70px', 'marginRight': '20px'}),
-            html.H1("Environmental Monitoring ENIT", style={'color': '#333', 'margin': '0'})
-        ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '30px'}),
+            html.Div([
+                html.Img(src='/assets/enit.png', style={'height': '70px', 'marginRight': '20px'}),
+                html.H1("Environmental Monitoring ENIT", style={'color': '#333', 'margin': '0'})
+            ], style={'display': 'flex', 'alignItems': 'center'}),
+
+            html.Img(src='/assets/manar.png', style={'height': '70px'})
+        ], style={
+            'display': 'flex',
+            'justifyContent': 'space-between',
+            'alignItems': 'center',
+            'marginBottom': '30px'
+        }),
 
         html.Div([
             html.Div([
