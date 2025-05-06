@@ -9,14 +9,15 @@ import json
 latest_data = {
     "temperature": 24.5,
     "humidity": 65,
-    "light": 750,
-    "co2": 450,
+    "luminosity": 750,
+    "iaq_tvoc": 0,
+    "eco2": 400,
     "timestamp": datetime.now()
 }
 data_lock = threading.Lock()
 
 # MQTT Settings
-mqtt_broker = "test.mosquitto.org"  # Public broker
+mqtt_broker = "test.mosquitto.org"
 mqtt_port = 1883
 mqtt_topic = "stm32/sensor_data"
 
@@ -32,8 +33,9 @@ def on_message(client, userdata, msg):
             latest_data.update({
                 "temperature": float(payload['temperature']),
                 "humidity": float(payload['humidity']),
-                "light": int(payload['light']),
-                "co2": int(payload['co2']),
+                "luminosity": int(payload['luminosity']),
+                "iaq_tvoc": int(payload['iaq_tvoc']),
+                "eco2": int(payload['eco2']),
                 "timestamp": datetime.now()
             })
         print(f"Received and updated: {latest_data}")
@@ -50,14 +52,15 @@ mqtt_client.loop_start()
 # Dash app
 server = None
 app = Dash(__name__, assets_folder='assets')
-server = app.server  # Needed for Render deployment
+server = app.server
 
-# Danger thresholds
+# Optional: Add thresholds if you want alerts
 THRESHOLDS = {
     'temperature': (15, 30),  
     'humidity': (30, 70),
-    'light': (300, 1000),
-    'co2': (300, 800)
+    'luminosity': (300, 1000),
+    'eco2': (300, 800),
+    'iaq_tvoc': (0, 300)
 }
 
 def metric_style(bg_color):
@@ -98,18 +101,27 @@ app.layout = html.Div(
             html.Div([
                 html.Div("🔆", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
-                    html.Div("Light", style={'color': '#FFE66D', 'fontSize': '18px'}),
-                    html.Div(id='live-light', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
+                    html.Div("Luminosity", style={'color': '#FFE66D', 'fontSize': '18px'}),
+                    html.Div(id='live-luminosity', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
                 ]),
             ], style=metric_style('#d0f0c0')),
 
             html.Div([
-                html.Div("🌿", style={'fontSize': '40px', 'marginRight': '15px'}),
+                html.Div("🌬️", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
-                    html.Div("CO2", style={'color': '#96CEB4', 'fontSize': '18px'}),
-                    html.Div(id='live-co2', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
+                    html.Div("IAQ TVOC", style={'color': '#FFA07A', 'fontSize': '18px'}),
+                    html.Div(id='live-iaq', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
                 ]),
             ], style=metric_style('#d0f0c0')),
+
+            html.Div([
+                html.Div("🫁", style={'fontSize': '40px', 'marginRight': '15px'}),
+                html.Div([
+                    html.Div("eCO2", style={'color': '#A0CED9', 'fontSize': '18px'}),
+                    html.Div(id='live-eco2', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
+                ]),
+            ], style=metric_style('#d0f0c0')),
+
         ], style={
             'display': 'grid',
             'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -132,8 +144,9 @@ app.layout = html.Div(
 @app.callback(
     [Output('live-temperature', 'children'),
      Output('live-humidity', 'children'),
-     Output('live-light', 'children'),
-     Output('live-co2', 'children'),
+     Output('live-luminosity', 'children'),
+     Output('live-iaq', 'children'),
+     Output('live-eco2', 'children'),
      Output('alert-message', 'children')],
     [Input('update-interval', 'n_intervals')]
 )
@@ -141,8 +154,9 @@ def update_metrics(n):
     with data_lock:
         temp = latest_data['temperature']
         humidity = latest_data['humidity']
-        light = latest_data['light']
-        co2 = latest_data['co2']
+        luminosity = latest_data['luminosity']
+        iaq = latest_data['iaq_tvoc']
+        eco2 = latest_data['eco2']
 
     alerts = []
 
@@ -150,18 +164,21 @@ def update_metrics(n):
         alerts.append(f"⚠️ Temperature out of range: {temp:.1f}°C")
     if not (THRESHOLDS['humidity'][0] <= humidity <= THRESHOLDS['humidity'][1]):
         alerts.append(f"⚠️ Humidity out of range: {humidity:.1f}%")
-    if not (THRESHOLDS['light'][0] <= light <= THRESHOLDS['light'][1]):
-        alerts.append(f"⚠️ Light out of range: {light} lux")
-    if not (THRESHOLDS['co2'][0] <= co2 <= THRESHOLDS['co2'][1]):
-        alerts.append(f"⚠️ CO2 level out of range: {co2} ppm")
+    if not (THRESHOLDS['luminosity'][0] <= luminosity <= THRESHOLDS['luminosity'][1]):
+        alerts.append(f"⚠️ Luminosity out of range: {luminosity} lux")
+    if not (THRESHOLDS['eco2'][0] <= eco2 <= THRESHOLDS['eco2'][1]):
+        alerts.append(f"⚠️ eCO2 level out of range: {eco2} ppm")
+    if not (THRESHOLDS['iaq_tvoc'][0] <= iaq <= THRESHOLDS['iaq_tvoc'][1]):
+        alerts.append(f"⚠️ TVOC level out of range: {iaq} ppb")
 
     alert_message = ' | '.join(alerts) if alerts else ''
 
     return (
         f"{temp:.1f}°C",
         f"{humidity:.1f}%",
-        f"{light} lux",
-        f"{co2} ppm",
+        f"{luminosity} lux",
+        f"{iaq} ppb",
+        f"{eco2} ppm",
         alert_message
     )
 
