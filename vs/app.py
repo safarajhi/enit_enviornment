@@ -196,4 +196,10 @@ def update_metrics(n):
         f"{humidity:.1f}%",
         f"{luminosity} lux",
         f"{iaq}",
-        f"{tvoc} ppb"
+        f"{tvoc} ppb",
+          alert_message
+    )
+
+# Run
+if __name__ == '__main__':
+    app.run_server(debug=True, host="0.0.0.0", port=8050)
