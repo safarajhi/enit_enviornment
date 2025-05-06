@@ -76,20 +76,24 @@ def metric_style(bg_color):
 app.layout = html.Div(
     style={'backgroundColor': '#e0f7e9', 'minHeight': '100vh', 'padding': '20px'},
     children=[
+        # Top Bar with centered title and logo on the right
         html.Div([
             html.Div([
-                html.Img(src='/assets/enit.png', style={'height': '70px', 'marginRight': '20px'}),
-                html.H1("Environmental Monitoring ENIT", style={'color': '#333', 'margin': '0'})
-            ], style={'display': 'flex', 'alignItems': 'center'}),
+                html.H1("Environmental Monitoring ENIT", style={
+                    'color': '#333', 'margin': '0', 'fontFamily': 'Segoe UI, sans-serif',
+                    'fontSize': '36px', 'textAlign': 'center'
+                })
+            ], style={'flex': '1', 'display': 'flex', 'justifyContent': 'center'}),
 
-            html.Img(src='/assets/manar.png', style={'height': '70px'})
+            html.Div([
+                html.Img(src='/assets/manar.png', style={'height': '70px'})
+            ], style={'display': 'flex', 'alignItems': 'center'})
         ], style={
-            'display': 'flex',
-            'justifyContent': 'space-between',
-            'alignItems': 'center',
+            'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'center',
             'marginBottom': '30px'
         }),
 
+        # Metrics Section
         html.Div([
             html.Div([
                 html.Div("🌡️", style={'fontSize': '40px', 'marginRight': '15px'}),
@@ -139,17 +143,11 @@ app.layout = html.Div(
                 ]),
             ], style=metric_style('#d0f0c0')),
         ], style={
-            'display': 'grid',
-            'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))',
-            'gap': '20px'
+            'display': 'grid', 'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))', 'gap': '20px'
         }),
 
         html.Div(id='alert-message', style={
-            'color': 'red',
-            'fontSize': '24px',
-            'fontWeight': 'bold',
-            'textAlign': 'center',
-            'marginTop': '20px'
+            'color': 'red', 'fontSize': '24px', 'fontWeight': 'bold', 'textAlign': 'center', 'marginTop': '20px'
         }),
 
         dcc.Interval(id='update-interval', interval=2000),
@@ -198,11 +196,4 @@ def update_metrics(n):
         f"{humidity:.1f}%",
         f"{luminosity} lux",
         f"{iaq}",
-        f"{tvoc} ppb",
-        f"{eco2} ppm",
-        alert_message
-    )
-
-# Run
-if __name__ == '__main__':
-    app.run_server(debug=True, host="0.0.0.0", port=8050)
+        f"{tvoc} pp
