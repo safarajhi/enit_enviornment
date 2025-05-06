@@ -9,7 +9,8 @@ latest_data = {
     "temperature": 24.5,
     "humidity": 65,
     "luminosity": 750,
-    "iaq_tvoc": 0,
+    "iaq": 150,
+    "tvoc": 100,
     "eco2": 400,
     "timestamp": datetime.now()
 }
@@ -33,7 +34,8 @@ def on_message(client, userdata, msg):
                 "temperature": float(payload['temperature']),
                 "humidity": float(payload['humidity']),
                 "luminosity": int(payload['luminosity']),
-                "iaq_tvoc": int(payload['iaq_tvoc']),
+                "iaq": int(payload['iaq']),
+                "tvoc": int(payload['tvoc']),
                 "eco2": int(payload['eco2']),
                 "timestamp": datetime.now()
             })
@@ -49,7 +51,6 @@ mqtt_client.connect(mqtt_broker, mqtt_port, 60)
 mqtt_client.loop_start()
 
 # Dash app
-server = None
 app = Dash(__name__, assets_folder='assets')
 server = app.server
 
@@ -58,7 +59,8 @@ THRESHOLDS = {
     'humidity': (30, 70),
     'luminosity': (300, 1000),
     'eco2': (300, 800),
-    'iaq_tvoc': (0, 300)
+    'tvoc': (0, 300),
+    'iaq': (0, 300)
 }
 
 def metric_style(bg_color):
@@ -114,10 +116,18 @@ app.layout = html.Div(
             ], style=metric_style('#d0f0c0')),
 
             html.Div([
-                html.Div("🌬️", style={'fontSize': '40px', 'marginRight': '15px'}),
+                html.Div("🌫️", style={'fontSize': '40px', 'marginRight': '15px'}),
                 html.Div([
-                    html.Div("IAQ TVOC", style={'color': '#FFA07A', 'fontSize': '18px'}),
+                    html.Div("IAQ", style={'color': '#FFA07A', 'fontSize': '18px'}),
                     html.Div(id='live-iaq', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
+                ]),
+            ], style=metric_style('#d0f0c0')),
+
+            html.Div([
+                html.Div("🧪", style={'fontSize': '40px', 'marginRight': '15px'}),
+                html.Div([
+                    html.Div("TVOC", style={'color': '#F08080', 'fontSize': '18px'}),
+                    html.Div(id='live-tvoc', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
                 ]),
             ], style=metric_style('#d0f0c0')),
 
@@ -128,7 +138,6 @@ app.layout = html.Div(
                     html.Div(id='live-eco2', style={'color': '#333', 'fontSize': '24px', 'fontWeight': 'bold'})
                 ]),
             ], style=metric_style('#d0f0c0')),
-
         ], style={
             'display': 'grid',
             'gridTemplateColumns': 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -153,6 +162,7 @@ app.layout = html.Div(
      Output('live-humidity', 'children'),
      Output('live-luminosity', 'children'),
      Output('live-iaq', 'children'),
+     Output('live-tvoc', 'children'),
      Output('live-eco2', 'children'),
      Output('alert-message', 'children')],
     [Input('update-interval', 'n_intervals')]
@@ -162,7 +172,8 @@ def update_metrics(n):
         temp = latest_data['temperature']
         humidity = latest_data['humidity']
         luminosity = latest_data['luminosity']
-        iaq = latest_data['iaq_tvoc']
+        iaq = latest_data['iaq']
+        tvoc = latest_data['tvoc']
         eco2 = latest_data['eco2']
 
     alerts = []
@@ -173,10 +184,12 @@ def update_metrics(n):
         alerts.append(f"⚠️ Humidity out of range: {humidity:.1f}%")
     if not (THRESHOLDS['luminosity'][0] <= luminosity <= THRESHOLDS['luminosity'][1]):
         alerts.append(f"⚠️ Luminosity out of range: {luminosity} lux")
+    if not (THRESHOLDS['iaq'][0] <= iaq <= THRESHOLDS['iaq'][1]):
+        alerts.append(f"⚠️ IAQ level out of range: {iaq}")
+    if not (THRESHOLDS['tvoc'][0] <= tvoc <= THRESHOLDS['tvoc'][1]):
+        alerts.append(f"⚠️ TVOC level out of range: {tvoc} ppb")
     if not (THRESHOLDS['eco2'][0] <= eco2 <= THRESHOLDS['eco2'][1]):
         alerts.append(f"⚠️ eCO2 level out of range: {eco2} ppm")
-    if not (THRESHOLDS['iaq_tvoc'][0] <= iaq <= THRESHOLDS['iaq_tvoc'][1]):
-        alerts.append(f"⚠️ TVOC level out of range: {iaq} ppb")
 
     alert_message = ' | '.join(alerts) if alerts else ''
 
@@ -184,7 +197,8 @@ def update_metrics(n):
         f"{temp:.1f}°C",
         f"{humidity:.1f}%",
         f"{luminosity} lux",
-        f"{iaq} ppb",
+        f"{iaq}",
+        f"{tvoc} ppb",
         f"{eco2} ppm",
         alert_message
     )
